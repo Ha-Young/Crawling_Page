@@ -112,3 +112,6 @@ dmypy.json
 
 pyvenv.cfg
 bin/
+*.log
+.vscode/
+.DS_Store
