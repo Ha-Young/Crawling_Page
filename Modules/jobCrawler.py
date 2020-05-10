@@ -1,19 +1,29 @@
+# Byte Degree Python Crawling MiniProject 수행
+# 2020-05-10 구르딩딩(hychoi)
+
+from time import sleep
+from bs4 import BeautifulSoup
+import requests
+import time
+from Modules.myLogger import Log
+
 class JobCrawler(object):
     # 초기화
     def __init__(self):
+        Log("JobCrawler Init...")
         # 다음뉴스의 IT 섹션의 기사를 대상으로 합니다.
         self.target_url = 'https://news.daum.net/breakingnews/digital?page='
         # 크롤링 페이지 범위를 지정합니다.
         # 기본값은 1 ~ 10 (총 10페이지)
         self.range = {'s_page': 1, 'e_page': 10}
-    
-    
+
+
     # 범위 지정
     def set_page_range(self, s_page, e_page):
         self.range['s_page'] = s_page
         self.range['e_page'] = e_page
-    
-    
+
+
     # 크롤링
     @staticmethod
     def crawling(self):
