@@ -98,6 +98,7 @@ class WishcatJobCrawler(object):
             WebDriverWait(self.browser, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, f'#project-list-box > div > ul > li:nth-child({next_page_li_count}) > a'))).click()
             time.sleep(5)
 
+        return recuriting_project_list
 
 
 
@@ -126,8 +127,9 @@ class WishcatJobCrawler(object):
     # 시작
     def start(self):
         print("start wishcat")
-        WishcatJobCrawler.crawling(self)
+        recuriting_project_list = WishcatJobCrawler.crawling(self)
+        print(recuriting_project_list)
+        
 
-
-# if __name__ == "__main__":
-#     pass
+if __name__ == "__main__":
+    pass
