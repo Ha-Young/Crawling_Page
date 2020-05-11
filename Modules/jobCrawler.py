@@ -32,7 +32,8 @@ class WishcatJobCrawler(object):
         # Selenium 페이지 이동
         chrome_options = Options()
         chrome_options.add_argument("--headless")
-        self.browser = webdriver.Chrome('./Webdriver/chromedriver', options=chrome_options)
+        # self.browser = webdriver.Chrome('./Webdriver/chromedriver', options=chrome_options)
+        self.browser = webdriver.Chrome('./Webdriver/chromedriver')
         self.browser.implicitly_wait(3)
         self.browser.get(self.target_url)
         
@@ -53,7 +54,7 @@ class WishcatJobCrawler(object):
 
         # 모집중인 프로젝트 리스트를 얻을때까지 계속 loop
         for i in range(1, len(page_li_list)):
-
+            soup = BeautifulSoup(self.browser.page_source, 'lxml')
             project_list = soup.select('#project-list-box > section')
             if project_list == None:
                 return None
@@ -79,17 +80,23 @@ class WishcatJobCrawler(object):
             
             page_li_list = soup.select('.pagination > li')
             
-            next_page_li_count = 0
+            next_page_li_count = 1
             for page_li in page_li_list:
-                page_number = page_li_list.select_one('a').text.strip()
+                a_tag = page_li.select_one('a')
+
+                if a_tag == None or len(a_tag) == 0:
+                    next_page_li_count += 1
+                    continue
+
+                page_number = a_tag.text.strip()
                 print(page_number)
-                if i + 1 == page_number:
+                if str(i + 1) == page_number:
                     break;
                 else:
                     next_page_li_count += 1
             
             WebDriverWait(self.browser, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, f'#project-list-box > div > ul > li:nth-child({next_page_li_count}) > a'))).click()
-            time.sleep(2)
+            time.sleep(5)
 
 
 
