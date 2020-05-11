@@ -44,35 +44,57 @@ class WishcatJobCrawler(object):
         # bs4 초기화
         soup = BeautifulSoup(self.browser.page_source, 'lxml')
 
+        # project list를 얻는다
         page_li_list = soup.select('.pagination > li')
 
-        # while True:
-        project_list = soup.select('#project-list-box > section')
+        # 모집중인 프로젝트 리스트를 얻을때까지 계속 loop
+        while True:
 
-        for project in project_list:
-            project_dic = {}
-            title_element = project.select_one('.project-title > a')
-            project_dic['title'] = title_element.text.strip()
-            project_dic['link'] = self.wishcat_url + title_element['href']
-            basic_info_element = project.select_one('.project-unit-basic-info')
-            project_dic['price'] = basic_info_element.select('span')[0].text.strip()
-            project_dic['priod'] = basic_info_element.select('span')[1].text.strip()
-            desc_element = project.select_one('.project-unit-desc')
-            project_dic['desc'] = desc_element.select_one('p').text.strip()
-            project_dic['dday'] = desc_element.select_one('.outer-info-upper-data > span').text.strip()
-            project_dic['applier_num'] = desc_element.select_one('.outer-info-under-data > span').text.strip()
-            project_dic['category'] = project.select_one('.project-category').text.strip()
-            project_dic['subcategory'] = project.select_one('.project-subcategory').text.strip()
-            skills = []
-            skill_elements = project.select('.project-skills-tag-viewbox > .skills-tag')
-            for skill_element in skill_elements:
-                skills.append(skill_element.text.strip())
-            project_dic['skills'] = ', '.join(skills)
-            print(project_dic)
-            print("="*20)
+            project_list = soup.select('#project-list-box > section')
+            if project_list == None:
+                return None
+
+            if len(project_list) == 1 and project_list[0]['class'][0] == 'no-result':
+                return None
+
+            for project in project_list:
+                if project['class'] and project['class'][0] == 'closed-project':
+                    breaker = True
+                    break
+
+                project_dic = self.get_project_dic(project)
+                
+                print(project_dic)
+                print("="*20)
+                recuriting_project_list.append(project_dic)
             
+            if breaker:
+                break
 
 
+
+
+    def get_project_dic(self, project_element):
+        project_dic = {}
+        title_element = project_element.select_one('.project-title > a')
+        project_dic['title'] = title_element.text.strip()
+        project_dic['link'] = self.wishcat_url + title_element['href']
+        basic_info_element = project_element.select_one('.project-unit-basic-info')
+        project_dic['price'] = basic_info_element.select('span')[0].text.strip()
+        project_dic['priod'] = basic_info_element.select('span')[1].text.strip()
+        desc_element = project_element.select_one('.project-unit-desc')
+        project_dic['desc'] = desc_element.select_one('p').text.strip()
+        project_dic['dday'] = desc_element.select_one('.outer-info-upper-data > span').text.strip()
+        project_dic['applier_num'] = desc_element.select_one('.outer-info-under-data > span').text.strip()
+        project_dic['category'] = project_element.select_one('.project-category').text.strip()
+        project_dic['subcategory'] = project_element.select_one('.project-subcategory').text.strip()
+        skills = []
+        skill_elements = project_element.select('.project-skills-tag-viewbox > .skills-tag')
+        for skill_element in skill_elements:
+            skills.append(skill_element.text.strip())
+        project_dic['skills'] = ', '.join(skills)
+
+        return project_dic
 
     # 시작
     def start(self):
