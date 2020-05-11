@@ -33,12 +33,12 @@ class WishcatJobCrawler(object):
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         self.browser = webdriver.Chrome('./Webdriver/chromedriver', options=chrome_options)
-        self.browser.implicitly_wait(5)
+        self.browser.implicitly_wait(3)
         self.browser.get(self.target_url)
         
         elem = self.browser.find_element_by_id("id_q")
         elem.send_keys(self.searchKeyword)
-        WebDriverWait(self.browser, 5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="form_id"]/div/input'))).click()
+        WebDriverWait(self.browser, 3).until(EC.presence_of_element_located((By.XPATH, '//*[@id="form_id"]/div/input'))).click()
         time.sleep(2)
 
         # bs4 초기화
@@ -46,9 +46,13 @@ class WishcatJobCrawler(object):
 
         # project list를 얻는다
         page_li_list = soup.select('.pagination > li')
+        print(page_li_list)
+        
+        if page_li_list == None or len(page_li_list) == 0:
+            return None
 
         # 모집중인 프로젝트 리스트를 얻을때까지 계속 loop
-        while True:
+        for i in range(1, len(page_li_list)):
 
             project_list = soup.select('#project-list-box > section')
             if project_list == None:
@@ -57,6 +61,8 @@ class WishcatJobCrawler(object):
             if len(project_list) == 1 and project_list[0]['class'][0] == 'no-result':
                 return None
 
+            # 모집마감이 발견되면 모집중인 프로젝트 크롤링이 완료. breker변수로 2중 for문 탈출
+            breaker = False
             for project in project_list:
                 if project['class'] and project['class'][0] == 'closed-project':
                     breaker = True
@@ -70,6 +76,20 @@ class WishcatJobCrawler(object):
             
             if breaker:
                 break
+            
+            page_li_list = soup.select('.pagination > li')
+            
+            next_page_li_count = 0
+            for page_li in page_li_list:
+                page_number = page_li_list.select_one('a').text.strip()
+                print(page_number)
+                if i + 1 == page_number:
+                    break;
+                else:
+                    next_page_li_count += 1
+            
+            WebDriverWait(self.browser, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, f'#project-list-box > div > ul > li:nth-child({next_page_li_count}) > a'))).click()
+            time.sleep(2)
 
 
 
