@@ -19,7 +19,8 @@ class WishcatJobCrawler(object):
     def __init__(self, keyword):
         Log("JobCrawler Init...")
         # 위시켓의 프로젝트 목록
-        self.target_url = 'https://www.wishket.com/project/'
+        self.wishcat_url = 'https://www.wishket.com'
+        self.target_url = self.wishcat_url + '/project/'
         self.searchKeyword = keyword
 
     # 크롤링
@@ -29,7 +30,9 @@ class WishcatJobCrawler(object):
         recuriting_project_list = []
         
         # Selenium 페이지 이동
-        self.browser = webdriver.Chrome('./Webdriver/chromedriver')
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        self.browser = webdriver.Chrome('./Webdriver/chromedriver', options=chrome_options)
         self.browser.implicitly_wait(5)
         self.browser.get(self.target_url)
         
@@ -42,14 +45,34 @@ class WishcatJobCrawler(object):
         soup = BeautifulSoup(self.browser.page_source, 'lxml')
 
         page_li_list = soup.select('.pagination > li')
-        
-        for page_li in page_li_list:
-            pass
 
+        # while True:
         project_list = soup.select('#project-list-box > section')
-        
+
         for project in project_list:
-            print(project.select_one('.project-title').text.strip())
+            project_dic = {}
+            title_element = project.select_one('.project-title > a')
+            project_dic['title'] = title_element.text.strip()
+            project_dic['link'] = self.wishcat_url + title_element['href']
+            basic_info_element = project.select_one('.project-unit-basic-info')
+            project_dic['price'] = basic_info_element.select('span')[0].text.strip()
+            project_dic['priod'] = basic_info_element.select('span')[1].text.strip()
+            desc_element = project.select_one('.project-unit-desc')
+            project_dic['desc'] = desc_element.select_one('p').text.strip()
+            project_dic['dday'] = desc_element.select_one('.outer-info-upper-data > span').text.strip()
+            project_dic['applier_num'] = desc_element.select_one('.outer-info-under-data > span').text.strip()
+            project_dic['category'] = project.select_one('.project-category').text.strip()
+            project_dic['subcategory'] = project.select_one('.project-subcategory').text.strip()
+            skills = []
+            skill_elements = project.select('.project-skills-tag-viewbox > .skills-tag')
+            for skill_element in skill_elements:
+                skills.append(skill_element.text.strip())
+            project_dic['skills'] = ', '.join(skills)
+            print(project_dic)
+            print("="*20)
+            
+
+
 
     # 시작
     def start(self):
