@@ -18,62 +18,79 @@ from Modules.myCsvMaker import processList_export_csv
 class WishcatJobCrawler(object):
     # 초기화
     def __init__(self, keyword):
-        Log("JobCrawler Init...")
+        Log(f"JobCrawler Init...")
         # 위시켓의 프로젝트 목록
         self.wishcat_url = 'https://www.wishket.com'
         self.target_url = self.wishcat_url + '/project/'
         self.searchKeyword = keyword
-
+        Log(f"target_url : {self.target_url}, searchKey : {self.searchKeyword}")
     # 크롤링
     @staticmethod
     def crawling(self):
+        Log(f"start crawling...")
         # 수집 데이터 전체 저장
         recuriting_project_list = []
         
+        Log(f"page move using by selenium")
         # Selenium 페이지 이동
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         # self.browser = webdriver.Chrome('./Webdriver/chromedriver', options=chrome_options)
         self.browser = webdriver.Chrome('./Webdriver/chromedriver')
+        Log(f"implicityly_wait.... 3seconds")
         self.browser.implicitly_wait(3)
         self.browser.get(self.target_url)
-        
+        Log(f"move page {self.target_url}")
+
+        Log(f"search start")
         elem = self.browser.find_element_by_id("id_q")
         elem.send_keys(self.searchKeyword)
         WebDriverWait(self.browser, 3).until(EC.presence_of_element_located((By.XPATH, '//*[@id="form_id"]/div/input'))).click()
+        Log(f"wait 2seconds")
         time.sleep(2)
 
         # bs4 초기화
+        Log(f"BeautifulSoup init")
         soup = BeautifulSoup(self.browser.page_source, 'lxml')
 
         # project list를 얻는다
+        Log(f"get pagination")
         page_li_list = soup.select('.pagination > li')
         print(page_li_list)
         
         if page_li_list == None or len(page_li_list) == 0:
+            Log(f"no data...")
             return None
 
         # 모집중인 프로젝트 리스트를 얻을때까지 계속 loop
+        Log(f"loop start 1~{len(page_li_list)}")
         for i in range(1, len(page_li_list)):
+            Log(f"loop index : {i}")
             soup = BeautifulSoup(self.browser.page_source, 'lxml')
+            Log(f"get project section list")
             project_list = soup.select('#project-list-box > section')
             if project_list == None:
+                Log(f"project list None")
                 return None
 
             if len(project_list) == 1 and project_list[0]['class'][0] == 'no-result':
+                Log(f"project list no-result")
                 return None
 
             # 모집마감이 발견되면 모집중인 프로젝트 크롤링이 완료. breker변수로 2중 for문 탈출
             breaker = False
             for project in project_list:
                 if project['class'] and project['class'][0] == 'closed-project':
+                    Log(f"find closed-project crawling stop")
                     breaker = True
                     break
-
+                
+                Log(f"make project_dic")
                 project_dic = self.get_project_dic(project)
                 
                 print(project_dic)
                 print("="*20)
+                Log(f"add project_dic")
                 recuriting_project_list.append(project_dic)
             
             if breaker:
@@ -81,6 +98,7 @@ class WishcatJobCrawler(object):
             
             page_li_list = soup.select('.pagination > li')
             
+            # 다음 페이지로 넘어가기 위해 다음 페이지를 구한다
             next_page_li_count = 1
             for page_li in page_li_list:
                 a_tag = page_li.select_one('a')
@@ -96,6 +114,8 @@ class WishcatJobCrawler(object):
                 else:
                     next_page_li_count += 1
             
+            Log(f"move to next page. click next page.")
+            # 다음 페이지 클릭
             WebDriverWait(self.browser, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, f'#project-list-box > div > ul > li:nth-child({next_page_li_count}) > a'))).click()
             time.sleep(5)
 
@@ -127,12 +147,19 @@ class WishcatJobCrawler(object):
 
     # 시작
     def start(self):
-        print("start wishcat")
-        recuriting_project_list = WishcatJobCrawler.crawling(self)
-        print(recuriting_project_list)
+        print("start crawling wishcat")
+        Log("start crawling wishcat")
 
-        processList_export_csv(recuriting_project_list, self.searchKeyword)
+        recuriting_project_list = WishcatJobCrawler.crawling(self)
+        print("complete crawling")
+        Log("complete crawling")
+        # print(recuriting_project_list)
         
+        print("make csv file")
+        Log("make csv file")
+        processList_export_csv(recuriting_project_list, self.searchKeyword)
+        Log("success")
+        print("success")
 
 if __name__ == "__main__":
     pass
