@@ -13,7 +13,7 @@ from selenium.webdriver.chrome.options import Options
 import requests
 import time
 from Modules.myLogger import Log
-from Modules.myCsvMaker import export_csv
+from Modules.myCsvMaker import processList_export_csv
 
 class WishcatJobCrawler(object):
     # 초기화
@@ -131,7 +131,8 @@ class WishcatJobCrawler(object):
         recuriting_project_list = WishcatJobCrawler.crawling(self)
         print(recuriting_project_list)
 
-
+        processList_export_csv(recuriting_project_list, self.searchKeyword)
+        
 
 if __name__ == "__main__":
     pass

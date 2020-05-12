@@ -10,7 +10,7 @@ def processList_export_csv(process_list, saveFileName):
             # Writer 객체 생성 
             wt = csv.writer(f)
             # Tuple to Csv
-            wt.writerow(','.join(process_title))
+            wt.writerow(process_title)
             
             for process_doc in process_list:
                 process_row = []
@@ -25,5 +25,5 @@ def processList_export_csv(process_list, saveFileName):
                 process_row.append(process_doc['skills'])
                 process_row.append(process_doc['link'])
 
-                wt.writerow(','.join(process_row))
+                wt.writerow(process_row)
 
